@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudents } from '../../../features/student/studentSlice';
-import { markAttendance } from '../../../features/attendance/attendanceSlice';
+import { markAttendance } from '../../../features/attendence/attendanceSlice';
 import { toast } from 'react-hot-toast';
 
 const AttendanceMarking = () => {

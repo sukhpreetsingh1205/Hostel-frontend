@@ -1,0 +1,18 @@
+export {
+  fetchComplaints,
+  fetchComplaintById,
+  fetchStudentComplaints,
+  createComplaint,
+  updateComplaint,
+  assignComplaint,
+  resolveComplaint,
+  closeComplaint,
+  addComment,
+  fetchComplaintStats,
+  clearComplaints,
+  clearError,
+  setPagination,
+  setFilters,
+  clearFilters,
+  clearCurrentComplaint,
+} from './complaintSlice';

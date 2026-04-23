@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudentFees } from '../../features/fee/feeSlice';
-import { fetchStudentAttendance } from '../../features/attendance/attendanceSlice';
+import { fetchStudentAttendance } from '../../features/attendence/attendanceSlice';
 import { fetchStudentLeaves } from '../../features/leave/leaveSlice';
 import { fetchStudentComplaints } from '../../features/complaint/complaintSlice';
 import { FaUser, FaBed, FaMoneyBillWave, FaCalendarCheck, FaClipboardList, FaBell } from 'react-icons/fa';
@@ -11,7 +11,7 @@ const StudentDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { studentFees } = useSelector((state) => state.fee);
-  const { attendance } = useSelector((state) => state.attendance);
+  const { studentAttendance } = useSelector((state) => state.attendance);
   const { leaves } = useSelector((state) => state.leave);
   const { complaints } = useSelector((state) => state.complaint);
   const { activeNotices } = useSelector((state) => state.notice);
@@ -20,7 +20,11 @@ const StudentDashboard = () => {
     // Fetch student data
     if (user?.studentInfo?._id) {
       dispatch(fetchStudentFees(user.studentInfo._id));
-      dispatch(fetchStudentAttendance(user.studentInfo._id));
+      dispatch(fetchStudentAttendance({
+        studentId: user.studentInfo._id,
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+      }));
       dispatch(fetchStudentLeaves(user.studentInfo._id));
       dispatch(fetchStudentComplaints(user.studentInfo._id));
     }
@@ -43,7 +47,7 @@ const StudentDashboard = () => {
     },
     {
       title: 'Attendance',
-      value: `${attendance?.summary?.percentage || 0}%`,
+      value: `${studentAttendance?.summary?.percentage || 0}%`,
       icon: FaCalendarCheck,
       color: 'bg-green-500',
       link: '/student/attendance',
@@ -118,12 +122,12 @@ const StudentDashboard = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Recent Notices</h2>
           <div className="space-y-3">
-            {activeNotices?.slice(0, 3).map((notice, index) => (
+            {[...(activeNotices?.pinned || []), ...(activeNotices?.recent || [])].slice(0, 3).map((notice, index) => (
               <div key={index} className="border-b border-gray-100 pb-3">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-medium text-gray-900">{notice.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{notice.summary}</p>
+                    <p className="text-sm text-gray-500 mt-1">{notice.content}</p>
                   </div>
                   {notice.priority === 'high' && (
                     <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">

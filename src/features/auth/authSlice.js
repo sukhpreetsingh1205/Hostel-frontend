@@ -81,8 +81,8 @@ export const resetPassword = createAsyncThunk(
 const initialState = {
   user: null,
   token: localStorage.getItem('token'),
-  isAuthenticated: false,
-  loading: false,
+  isAuthenticated: Boolean(localStorage.getItem('token')),
+  loading: Boolean(localStorage.getItem('token')),
   error: null,
 };
 

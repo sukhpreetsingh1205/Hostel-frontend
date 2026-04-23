@@ -93,24 +93,30 @@ export const fetchRecentActivities = createAsyncThunk(
 
 export const fetchChartData = createAsyncThunk(
   'dashboard/fetchChartData',
-  async ({ type, period } = {}, { rejectWithValue }) => {
+  async ({ type } = {}, { rejectWithValue }) => {
     try {
       let data = {};
       
       switch (type) {
-        case 'attendance':
-          const attendanceStats = await attendanceApi.getStats({ month: new Date().getMonth() + 1, year: new Date().getFullYear() });
+        case 'attendance': {
+          const attendanceStats = await attendanceApi.getStats({
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+          });
           data.attendance = attendanceStats.data.data;
           break;
-        case 'fees':
+        }
+        case 'fees': {
           const feeStats = await feeApi.getStats();
           data.fees = feeStats.data.data;
           break;
-        case 'complaints':
+        }
+        case 'complaints': {
           const complaintStats = await complaintApi.getStats();
           data.complaints = complaintStats.data.data;
           break;
-        default:
+        }
+        default: {
           // Fetch all chart data
           const [attendance, fees, complaints] = await Promise.all([
             attendanceApi.getStats({ month: new Date().getMonth() + 1, year: new Date().getFullYear() }),
@@ -122,6 +128,8 @@ export const fetchChartData = createAsyncThunk(
             fees: fees.data.data,
             complaints: complaints.data.data,
           };
+          break;
+        }
       }
       
       return data;

@@ -187,7 +187,7 @@ const MyLeaves = () => {
                   <option value="day_leave">Day Leave</option>
                   <option value="short_leave">Short Leave (4-8 hours)</option>
                   <option value="weekend_leave">Weekend Leave</option>
-                  <option value="long_leave">Long Leave (>3 days)</option>
+                  <option value="long_leave">Long Leave (&gt;3 days)</option>
                   <option value="emergency_leave">Emergency Leave</option>
                   <option value="medical_leave">Medical Leave</option>
                 </select>

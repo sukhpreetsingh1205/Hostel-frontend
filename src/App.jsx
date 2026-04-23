@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { getCurrentUser } from './features/auth/authSlice';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import MainLayout from './components/layouts/MainLayout';
@@ -43,6 +44,18 @@ import MyLeaves from './pages/student/MyLeaves';
 import MyComplaints from './pages/student/MyComplaints';
 import Notices from './pages/student/Notices';
 
+const roleToHome = (role) => {
+  if (role === 'admin') return '/admin';
+  if (role === 'warden') return '/warden';
+  return '/student';
+};
+
+const HomeRedirect = () => {
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <Navigate to={roleToHome(user?.role)} replace />;
+};
+
 function App() {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
@@ -54,77 +67,80 @@ function App() {
   }, [dispatch, token]);
 
   return (
-    <Routes>
-      {/* Auth Routes */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-      </Route>
+    <>
+      <Toaster position="top-right" />
+      <Routes>
+        {/* Auth Routes */}
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+        </Route>
 
-      {/* Admin Routes */}
-      <Route
-        element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/students" element={<StudentList />} />
-        <Route path="/admin/students/new" element={<StudentForm />} />
-        <Route path="/admin/students/:id" element={<StudentDetails />} />
-        <Route path="/admin/students/:id/edit" element={<StudentForm />} />
-        <Route path="/admin/rooms" element={<RoomList />} />
-        <Route path="/admin/rooms/new" element={<RoomForm />} />
-        <Route path="/admin/rooms/:id/edit" element={<RoomForm />} />
-        <Route path="/admin/fees" element={<FeeList />} />
-        <Route path="/admin/fees/generate" element={<GenerateFees />} />
-        <Route path="/admin/attendance/mark" element={<AttendanceMarking />} />
-        <Route path="/admin/attendance/report" element={<AttendanceReport />} />
-        <Route path="/admin/leaves" element={<LeaveRequests />} />
-        <Route path="/admin/complaints" element={<ComplaintList />} />
-        <Route path="/admin/notices" element={<NoticeList />} />
-        <Route path="/admin/notices/new" element={<NoticeForm />} />
-        <Route path="/admin/notices/:id/edit" element={<NoticeForm />} />
-      </Route>
+        {/* Admin Routes */}
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/students" element={<StudentList />} />
+          <Route path="/admin/students/new" element={<StudentForm />} />
+          <Route path="/admin/students/:id" element={<StudentDetails />} />
+          <Route path="/admin/students/:id/edit" element={<StudentForm />} />
+          <Route path="/admin/rooms" element={<RoomList />} />
+          <Route path="/admin/rooms/new" element={<RoomForm />} />
+          <Route path="/admin/rooms/:id/edit" element={<RoomForm />} />
+          <Route path="/admin/fees" element={<FeeList />} />
+          <Route path="/admin/fees/generate" element={<GenerateFees />} />
+          <Route path="/admin/attendance/mark" element={<AttendanceMarking />} />
+          <Route path="/admin/attendance/report" element={<AttendanceReport />} />
+          <Route path="/admin/leaves" element={<LeaveRequests />} />
+          <Route path="/admin/complaints" element={<ComplaintList />} />
+          <Route path="/admin/notices" element={<NoticeList />} />
+          <Route path="/admin/notices/new" element={<NoticeForm />} />
+          <Route path="/admin/notices/:id/edit" element={<NoticeForm />} />
+        </Route>
 
-      {/* Warden Routes */}
-      <Route
-        element={
-          <ProtectedRoute allowedRoles={['warden']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/warden" element={<WardenDashboard />} />
-        <Route path="/warden/attendance" element={<WardenAttendanceMarking />} />
-        <Route path="/warden/leaves" element={<LeaveApproval />} />
-        <Route path="/warden/complaints" element={<ComplaintManagement />} />
-      </Route>
+        {/* Warden Routes */}
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={['warden']}>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/warden" element={<WardenDashboard />} />
+          <Route path="/warden/attendance" element={<WardenAttendanceMarking />} />
+          <Route path="/warden/leaves" element={<LeaveApproval />} />
+          <Route path="/warden/complaints" element={<ComplaintManagement />} />
+        </Route>
 
-      {/* Student Routes */}
-      <Route
-        element={
-          <ProtectedRoute allowedRoles={['student']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/student" element={<StudentDashboard />} />
-        <Route path="/student/profile" element={<MyProfile />} />
-        <Route path="/student/room" element={<MyRoom />} />
-        <Route path="/student/fees" element={<MyFees />} />
-        <Route path="/student/attendance" element={<MyAttendance />} />
-        <Route path="/student/leaves" element={<MyLeaves />} />
-        <Route path="/student/complaints" element={<MyComplaints />} />
-        <Route path="/student/notices" element={<Notices />} />
-      </Route>
+        {/* Student Routes */}
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/student" element={<StudentDashboard />} />
+          <Route path="/student/profile" element={<MyProfile />} />
+          <Route path="/student/room" element={<MyRoom />} />
+          <Route path="/student/fees" element={<MyFees />} />
+          <Route path="/student/attendance" element={<MyAttendance />} />
+          <Route path="/student/leaves" element={<MyLeaves />} />
+          <Route path="/student/complaints" element={<MyComplaints />} />
+          <Route path="/student/notices" element={<Notices />} />
+        </Route>
 
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
-    </Routes>
+        {/* Default redirect */}
+        <Route path="/" element={<HomeRedirect />} />
+        <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
+      </Routes>
+    </>
   );
 }
 

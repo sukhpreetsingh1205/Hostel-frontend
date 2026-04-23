@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchNotices, deleteNotice, togglePinNotice } from '../../../features/notice/noticeSlice';
-import { FiPlus, FiEdit2, FiTrash2, FiPin, FiEye } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiMapPin } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
 const NoticeList = () => {
@@ -63,7 +63,7 @@ const NoticeList = () => {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3">
-                    <FiPin className="h-5 w-5 text-yellow-600" />
+                    <FiMapPin className="h-5 w-5 text-yellow-600" />
                     <h3 className="text-lg font-semibold text-gray-900">{notice.title}</h3>
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(notice.priority)}`}>
                       {notice.priority}
@@ -84,7 +84,7 @@ const NoticeList = () => {
                     className="p-2 text-yellow-600 hover:bg-yellow-100 rounded-lg"
                     title="Unpin"
                   >
-                    <FiPin className="h-5 w-5" />
+                    <FiMapPin className="h-5 w-5" />
                   </button>
                   <Link
                     to={`/admin/notices/${notice._id}/edit`}
@@ -125,7 +125,7 @@ const NoticeList = () => {
                     className="p-2 text-gray-400 hover:text-yellow-600 hover:bg-gray-100 rounded-lg"
                     title="Pin"
                   >
-                    <FiPin className="h-5 w-5" />
+                    <FiMapPin className="h-5 w-5" />
                   </button>
                   <Link
                     to={`/admin/notices/${notice._id}/edit`}

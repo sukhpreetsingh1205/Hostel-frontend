@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchFees, sendReminders } from '../../../features/fee/feeSlice';
-import { FiEye, FiBell, FiDownload } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
+import { FiEye, FiBell, FiPlus } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
 const FeeList = () => {
@@ -159,6 +160,32 @@ const FeeList = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                Page {pagination?.page || currentPage} of {pagination?.pages || 1}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={(pagination?.page || currentPage) <= 1}
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(pagination?.pages || p + 1, p + 1))
+                  }
+                  disabled={(pagination?.page || currentPage) >= (pagination?.pages || 1)}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </>
         )}

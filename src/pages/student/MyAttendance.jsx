@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchStudentAttendance } from '../../features/attendance/attendanceSlice';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-
-const localizer = momentLocalizer(moment);
+import { fetchStudentAttendance } from '../../features/attendence/attendanceSlice';
 
 const MyAttendance = () => {
   const dispatch = useDispatch();
   const { currentStudent } = useSelector((state) => state.student);
-  const { attendance, summary } = useSelector((state) => state.attendance);
+  const { studentAttendance } = useSelector((state) => state.attendance);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
@@ -24,30 +19,33 @@ const MyAttendance = () => {
     }
   }, [dispatch, currentStudent, selectedMonth, selectedYear]);
 
-  const events = attendance?.map(record => ({
-    title: record.status.toUpperCase(),
-    start: new Date(record.date),
-    end: new Date(record.date),
-    allDay: true,
-    status: record.status,
-  })) || [];
+  const attendance = studentAttendance?.data || [];
+  const summary = studentAttendance?.summary;
 
-  const eventStyleGetter = (event) => {
-    let backgroundColor = '#10B981'; // green for present
-    if (event.status === 'absent') backgroundColor = '#EF4444';
-    if (event.status === 'late') backgroundColor = '#F59E0B';
-    if (event.status === 'leave') backgroundColor = '#8B5CF6';
-    
-    return {
-      style: {
-        backgroundColor,
-        borderRadius: '4px',
-        opacity: 0.8,
-        color: 'white',
-        border: '0px',
-        display: 'block',
-      },
-    };
+  const statusByDay = attendance.reduce((acc, record) => {
+    const date = new Date(record.date);
+    if (Number.isNaN(date.getTime())) return acc;
+    if (date.getFullYear() !== selectedYear || date.getMonth() + 1 !== selectedMonth) return acc;
+    acc[date.getDate()] = record.status;
+    return acc;
+  }, {});
+
+  const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+  const firstDayIndex = new Date(selectedYear, selectedMonth - 1, 1).getDay(); // 0=Sun
+
+  const statusToClasses = (status) => {
+    switch (status) {
+      case 'present':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'absent':
+        return 'bg-red-100 text-red-700 border-red-200';
+      case 'late':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'leave':
+        return 'bg-purple-100 text-purple-700 border-purple-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
   };
 
   return (
@@ -107,22 +105,31 @@ const MyAttendance = () => {
       {/* Attendance Calendar */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Attendance Calendar</h2>
-        <div className="h-[600px]">
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            views={['month']}
-            defaultView="month"
-            date={new Date(selectedYear, selectedMonth - 1, 1)}
-            onNavigate={(date) => {
-              setSelectedMonth(date.getMonth() + 1);
-              setSelectedYear(date.getFullYear());
-            }}
-            eventPropGetter={eventStyleGetter}
-            style={{ height: '100%' }}
-          />
+        <div className="grid grid-cols-7 gap-2 text-center">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+            <div key={d} className="text-xs font-semibold text-gray-500 py-2">
+              {d}
+            </div>
+          ))}
+
+          {Array.from({ length: firstDayIndex }).map((_, idx) => (
+            <div key={`blank-${idx}`} />
+          ))}
+
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+            const status = statusByDay[day];
+            return (
+              <div
+                key={day}
+                className={`border rounded-lg p-2 min-h-16 flex flex-col items-center justify-center ${statusToClasses(status)}`}
+              >
+                <div className="text-sm font-bold">{day}</div>
+                <div className="text-[10px] uppercase tracking-wide mt-1">
+                  {status ? status : '—'}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

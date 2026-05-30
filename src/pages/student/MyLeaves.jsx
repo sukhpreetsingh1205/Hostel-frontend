@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchStudentLeaves, createLeave, cancelLeave } from '../../features/leave/leaveSlice';
 import { FiPlus, FiX } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
 const MyLeaves = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const { currentStudent } = useSelector((state) => state.student);
   const { leaves, stats } = useSelector((state) => state.leave);
   const [showForm, setShowForm] = useState(false);
@@ -19,10 +22,11 @@ const MyLeaves = () => {
   });
 
   useEffect(() => {
-    if (currentStudent?._id) {
-      dispatch(fetchStudentLeaves(currentStudent._id));
+    const studentId = user?.studentInfo?._id || currentStudent?._id;
+    if (studentId) {
+      dispatch(fetchStudentLeaves(studentId));
     }
-  }, [dispatch, currentStudent]);
+  }, [dispatch, user?.studentInfo?._id, currentStudent?._id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,7 +73,7 @@ const MyLeaves = () => {
           <p className="text-gray-600 mt-1">Apply for leave and track requests</p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => navigate('/student/leaves/new')}
           className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
         >
           <FiPlus />

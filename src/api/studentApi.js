@@ -7,4 +7,5 @@ export const studentApi = {
   update: (id, data) => axiosInstance.put(`/students/${id}`, data),
   delete: (id) => axiosInstance.delete(`/students/${id}`),
   getStats: () => axiosInstance.get('/students/stats/dashboard'),
+  getWithoutRoom: () => axiosInstance.get('/students/without-room'),
 };

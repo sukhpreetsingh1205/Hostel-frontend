@@ -5,6 +5,7 @@ export {
   updateStudent,
   deleteStudent,
   fetchStudentStats,
+  fetchStudentsWithoutRoom,
   clearCurrentStudent,
   clearError,
   setPagination,

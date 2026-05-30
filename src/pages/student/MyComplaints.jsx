@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { fetchStudentComplaints } from '../../features/complaint/complaintSlice';
+import { FiPlus } from 'react-icons/fi';
 
 const MyComplaints = () => {
   const dispatch = useDispatch();
@@ -15,9 +17,18 @@ const MyComplaints = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Complaints</h1>
-        <p className="text-gray-600 mt-1">Track your raised complaints and their status</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">My Complaints</h1>
+          <p className="text-gray-600 mt-1">Track your raised complaints and their status</p>
+        </div>
+        <Link
+          to="/student/complaints/new"
+          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
+          <FiPlus />
+          <span>New Complaint</span>
+        </Link>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">

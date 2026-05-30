@@ -62,6 +62,18 @@ export const updateComplaint = createAsyncThunk(
   }
 );
 
+export const updateComplaintStatus = createAsyncThunk(
+  'complaint/updateComplaintStatus',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await complaintApi.updateStatus(id, data);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  }
+);
+
 export const assignComplaint = createAsyncThunk(
   'complaint/assignComplaint',
   async ({ id, assignedTo }, { rejectWithValue }) => {
@@ -227,6 +239,15 @@ const complaintSlice = createSlice({
       
       // Update Complaint
       .addCase(updateComplaint.fulfilled, (state, action) => {
+        const index = state.complaints.findIndex(c => c._id === action.payload._id);
+        if (index !== -1) {
+          state.complaints[index] = action.payload;
+        }
+        if (state.currentComplaint?._id === action.payload._id) {
+          state.currentComplaint = action.payload;
+        }
+      })
+      .addCase(updateComplaintStatus.fulfilled, (state, action) => {
         const index = state.complaints.findIndex(c => c._id === action.payload._id);
         if (index !== -1) {
           state.complaints[index] = action.payload;

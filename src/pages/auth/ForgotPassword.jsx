@@ -1,76 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
 import { forgotPassword } from '../../features/auth/authSlice';
-import { FiMail } from 'react-icons/fi';
+import { FiMail, FiArrowLeft, FiCheckCircle } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
 const ForgotPassword = () => {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading } = useSelector((s) => s.auth);
+  const [sent, setSent] = useState(false);
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
-
-  const onSubmit = async ({ email }) => {
-    const result = await dispatch(forgotPassword(email));
-    if (forgotPassword.fulfilled.match(result)) {
-      toast.success(result.payload?.message || 'Password reset email sent');
-    } else {
-      toast.error(result.payload || 'Failed to send reset email');
-    }
+  const onSubmit = async (data) => {
+    const result = await dispatch(forgotPassword(data.email));
+    if (!result.error) setSent(true);
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
-      <div className="max-w-md w-full bg-white p-10 rounded-xl shadow-2xl">
-        <h2 className="text-2xl font-extrabold text-gray-900 text-center">Forgot Password</h2>
-        <p className="mt-2 text-sm text-gray-600 text-center">
-          Enter your email and we will send a reset link.
-        </p>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email Address</label>
-            <div className="mt-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FiMail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                {...register('email', {
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address',
-                  },
-                })}
-                type="email"
-                className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="you@example.com"
-              />
-            </div>
-            {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn btn-primary disabled:opacity-50"
-          >
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-sm">
-          <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-            Back to login
-          </Link>
+  if (sent) {
+    return (
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto">
+          <FiCheckCircle className="w-8 h-8 text-emerald-500" />
         </div>
+        <h2 className="text-xl font-bold text-surface-900 dark:text-white">Check your email</h2>
+        <p className="text-sm text-surface-500">We&apos;ve sent a password reset link to your email address. The link expires in 10 minutes.</p>
+        <Link to="/login" className="btn-secondary inline-flex"><FiArrowLeft className="w-4 h-4" /> Back to login</Link>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-surface-900 dark:text-white">Forgot Password</h2>
+        <p className="mt-1 text-sm text-surface-500">Enter your email and we&apos;ll send you a reset link</p>
       </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div>
+          <label className="input-label">Email Address</label>
+          <div className="relative">
+            <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+            <input {...register('email', { required: 'Email is required', pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Invalid email' } })} type="email" className="input-field pl-10" placeholder="you@example.com" />
+          </div>
+          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+        </div>
+        <button type="submit" disabled={loading} className="btn-primary w-full py-3">
+          {loading ? 'Sending...' : 'Send Reset Link'}
+        </button>
+      </form>
+      <p className="text-center text-sm text-surface-500">
+        <Link to="/login" className="font-semibold text-brand-500 hover:text-brand-600"><FiArrowLeft className="inline w-3 h-3 mr-1" />Back to login</Link>
+      </p>
     </div>
   );
 };

@@ -6,6 +6,7 @@ export const complaintApi = {
   getStudentComplaints: (studentId) => axiosInstance.get(`/complaints/student/${studentId}`),
   create: (data) => axiosInstance.post('/complaints', data),
   update: (id, data) => axiosInstance.put(`/complaints/${id}`, data),
+  updateStatus: (id, data) => axiosInstance.put(`/complaints/${id}/status`, data),
   assign: (id, assignedTo) => axiosInstance.put(`/complaints/${id}/assign`, { assignedTo }),
   resolve: (id, data) => axiosInstance.put(`/complaints/${id}/resolve`, data),
   close: (id, data) => axiosInstance.put(`/complaints/${id}/close`, data),

@@ -9,25 +9,48 @@ import { complaintApi } from '../../api/complaintApi';
 // Async Thunks
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchDashboardData',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
-      const [studentStats, roomStats, feeStats, todayAttendance, leaveStats, complaintStats] = await Promise.all([
-        studentApi.getStats(),
-        roomApi.getStats(),
-        feeApi.getStats(),
-        attendanceApi.getTodaySummary(),
-        leaveApi.getStats(),
-        complaintApi.getStats(),
-      ]);
-      
-      return {
-        studentStats: studentStats.data.data,
-        roomStats: roomStats.data.data,
-        feeStats: feeStats.data.data,
-        todayAttendance: todayAttendance.data.data,
-        leaveStats: leaveStats.data.data,
-        complaintStats: complaintStats.data.data,
-      };
+      const role = getState()?.auth?.user?.role;
+
+      // Admin dashboard uses dedicated stats endpoints.
+      if (role === 'admin') {
+        const [studentStats, roomStats, feeStats, todayAttendance, leaveStats, complaintStats] = await Promise.all([
+          studentApi.getStats(),
+          roomApi.getStats(),
+          feeApi.getStats(),
+          attendanceApi.getTodaySummary(),
+          leaveApi.getStats(),
+          complaintApi.getStats(),
+        ]);
+
+        return {
+          studentStats: studentStats.data.data,
+          roomStats: roomStats.data.data,
+          feeStats: feeStats.data.data,
+          todayAttendance: todayAttendance.data.data,
+          leaveStats: leaveStats.data.data,
+          complaintStats: complaintStats.data.data,
+        };
+      }
+
+      // Warden dashboard should not call admin-only stats endpoints (prevents 403 + toaster spam).
+      if (role === 'warden') {
+        const [students, rooms] = await Promise.all([
+          studentApi.getAll({ limit: 1 }),
+          roomApi.getAll({ limit: 1 }),
+        ]);
+
+        return {
+          studentStats: { total: students.data?.pagination?.total ?? students.data?.count ?? 0 },
+          roomStats: {
+            summary: { totalRooms: rooms.data?.pagination?.total ?? rooms.data?.count ?? 0 },
+          },
+        };
+      }
+
+      // Fallback: minimal safe data for other roles.
+      return {};
     } catch (error) {
       return rejectWithValue(error.response?.data?.message);
     }

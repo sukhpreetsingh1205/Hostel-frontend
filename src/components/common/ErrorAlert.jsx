@@ -1,20 +1,25 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { FiAlertCircle, FiX } from 'react-icons/fi';
 
-const ErrorAlert = ({ title = 'Error', message, onClose, className = '' }) => {
+const ErrorAlert = ({ message, onClose }) => {
   if (!message) return null;
 
   return (
-    <div className={`alert alert-error shadow-sm ${className}`}>
-      <div className="flex-1">
-        <h3 className="font-semibold">{title}</h3>
-        <div className="text-sm opacity-90">{message}</div>
-      </div>
-      {onClose ? (
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
-          Close
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
+    >
+      <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+      <p className="flex-1 text-sm text-red-600 dark:text-red-400">{message}</p>
+      {onClose && (
+        <button onClick={onClose} className="text-red-400 hover:text-red-600">
+          <FiX className="w-4 h-4" />
         </button>
-      ) : null}
-    </div>
+      )}
+    </motion.div>
   );
 };
 

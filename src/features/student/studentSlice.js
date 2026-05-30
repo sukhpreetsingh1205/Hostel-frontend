@@ -74,6 +74,18 @@ export const fetchStudentStats = createAsyncThunk(
   }
 );
 
+export const fetchStudentsWithoutRoom = createAsyncThunk(
+  'student/fetchStudentsWithoutRoom',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await studentApi.getWithoutRoom();
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  }
+);
+
 const initialState = {
   students: [],
   currentStudent: null,
@@ -155,6 +167,19 @@ const studentSlice = createSlice({
       // Fetch Student Stats
       .addCase(fetchStudentStats.fulfilled, (state, action) => {
         state.stats = action.payload;
+      })
+      // Fetch Students Without Room
+      .addCase(fetchStudentsWithoutRoom.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchStudentsWithoutRoom.fulfilled, (state, action) => {
+        state.loading = false;
+        state.students = action.payload;
+      })
+      .addCase(fetchStudentsWithoutRoom.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

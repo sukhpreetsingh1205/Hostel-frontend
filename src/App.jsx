@@ -9,6 +9,7 @@ import AuthLayout from './components/layouts/AuthLayout';
 
 // Auth Pages
 import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 
@@ -25,14 +26,26 @@ import AttendanceMarking from './pages/admin/Attendance/AttendanceMarking';
 import AttendanceReport from './pages/admin/Attendance/AttendanceReport';
 import LeaveRequests from './pages/admin/Leaves/LeaveRequests';
 import ComplaintList from './pages/admin/Complaints/ComplaintList';
+import ComplaintDetails from './pages/admin/Complaints/ComplaintDetails';
 import NoticeList from './pages/admin/Notices/NoticeList';
 import NoticeForm from './pages/admin/Notices/NoticeForm';
+import FeeDetails from './pages/admin/Fees/FeeDetails';
+import LeaveDetails from './pages/admin/Leaves/LeaveDetails';
+import RoomDetails from './pages/admin/Rooms/RoomDetails';
+import RoomAssign from './pages/admin/Rooms/RoomAssign';
+import AdminReports from './pages/admin/Reports';
 
 // Warden Pages
 import WardenDashboard from './pages/warden/WardenDashboard';
 import WardenAttendanceMarking from './pages/warden/AttendanceMarking';
+import WardenAttendanceReport from './pages/warden/AttendanceReport';
 import LeaveApproval from './pages/warden/LeaveApproval';
 import ComplaintManagement from './pages/warden/ComplaintManagement';
+import WardenComplaintDetails from './pages/warden/ComplaintDetails';
+import WardenRooms from './pages/warden/Rooms';
+import WardenRoomDetails from './pages/warden/RoomDetails';
+import WardenStudents from './pages/warden/Students';
+import WardenStudentDetails from './pages/warden/StudentDetails';
 
 // Student Pages
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -41,8 +54,11 @@ import MyRoom from './pages/student/MyRoom';
 import MyFees from './pages/student/MyFees';
 import MyAttendance from './pages/student/MyAttendance';
 import MyLeaves from './pages/student/MyLeaves';
+import LeaveNew from './pages/student/LeaveNew';
 import MyComplaints from './pages/student/MyComplaints';
+import ComplaintNew from './pages/student/ComplaintNew';
 import Notices from './pages/student/Notices';
+import NotFound from './pages/NotFound';
 
 const roleToHome = (role) => {
   if (role === 'admin') return '/admin';
@@ -73,6 +89,7 @@ function App() {
         {/* Auth Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Route>
@@ -92,16 +109,22 @@ function App() {
           <Route path="/admin/students/:id/edit" element={<StudentForm />} />
           <Route path="/admin/rooms" element={<RoomList />} />
           <Route path="/admin/rooms/new" element={<RoomForm />} />
+          <Route path="/admin/rooms/:id" element={<RoomDetails />} />
           <Route path="/admin/rooms/:id/edit" element={<RoomForm />} />
+          <Route path="/admin/rooms/:id/assign" element={<RoomAssign />} />
           <Route path="/admin/fees" element={<FeeList />} />
+          <Route path="/admin/fees/:id" element={<FeeDetails />} />
           <Route path="/admin/fees/generate" element={<GenerateFees />} />
           <Route path="/admin/attendance/mark" element={<AttendanceMarking />} />
           <Route path="/admin/attendance/report" element={<AttendanceReport />} />
           <Route path="/admin/leaves" element={<LeaveRequests />} />
+          <Route path="/admin/leaves/:id" element={<LeaveDetails />} />
           <Route path="/admin/complaints" element={<ComplaintList />} />
+          <Route path="/admin/complaints/:id" element={<ComplaintDetails />} />
           <Route path="/admin/notices" element={<NoticeList />} />
           <Route path="/admin/notices/new" element={<NoticeForm />} />
           <Route path="/admin/notices/:id/edit" element={<NoticeForm />} />
+          <Route path="/admin/reports" element={<AdminReports />} />
         </Route>
 
         {/* Warden Routes */}
@@ -114,8 +137,14 @@ function App() {
         >
           <Route path="/warden" element={<WardenDashboard />} />
           <Route path="/warden/attendance" element={<WardenAttendanceMarking />} />
+          <Route path="/warden/attendance/report" element={<WardenAttendanceReport />} />
           <Route path="/warden/leaves" element={<LeaveApproval />} />
           <Route path="/warden/complaints" element={<ComplaintManagement />} />
+          <Route path="/warden/complaints/:id" element={<WardenComplaintDetails />} />
+          <Route path="/warden/rooms" element={<WardenRooms />} />
+          <Route path="/warden/rooms/:id" element={<WardenRoomDetails />} />
+          <Route path="/warden/students" element={<WardenStudents />} />
+          <Route path="/warden/students/:id" element={<WardenStudentDetails />} />
         </Route>
 
         {/* Student Routes */}
@@ -132,13 +161,16 @@ function App() {
           <Route path="/student/fees" element={<MyFees />} />
           <Route path="/student/attendance" element={<MyAttendance />} />
           <Route path="/student/leaves" element={<MyLeaves />} />
+          <Route path="/student/leaves/new" element={<LeaveNew />} />
           <Route path="/student/complaints" element={<MyComplaints />} />
+          <Route path="/student/complaints/new" element={<ComplaintNew />} />
           <Route path="/student/notices" element={<Notices />} />
         </Route>
 
         {/* Default redirect */}
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

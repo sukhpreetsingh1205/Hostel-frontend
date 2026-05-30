@@ -3,8 +3,10 @@ import { useSelector } from 'react-redux';
 import { FaBed, FaWifi, FaFan, FaSnowflake, FaToilet, FaClipboardList } from 'react-icons/fa';
 
 const MyRoom = () => {
+  const { user } = useSelector((state) => state.auth);
   const { currentStudent } = useSelector((state) => state.student);
-  const room = currentStudent?.roomId;
+  const studentRecord = user?.studentInfo || currentStudent;
+  const room = studentRecord?.roomId;
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [requestData, setRequestData] = useState({
     type: 'maintenance',
@@ -99,15 +101,15 @@ const MyRoom = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Roommates</h2>
           <div className="space-y-3">
-            {room.currentStudents.map((student, index) => (
-              student._id !== currentStudent?._id && (
+            {room.currentStudents.map((roommate, index) => (
+              roommate._id !== studentRecord?._id && (
                 <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                   <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <span className="text-indigo-600 font-medium">{student.name?.charAt(0)}</span>
+                    <span className="text-indigo-600 font-medium">{roommate.name?.charAt(0)}</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{student.name}</p>
-                    <p className="text-sm text-gray-500">{student.course} - Year {student.year}</p>
+                    <p className="font-medium text-gray-900">{roommate.name}</p>
+                    <p className="text-sm text-gray-500">{roommate.course} - Year {roommate.year}</p>
                   </div>
                 </div>
               )

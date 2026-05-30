@@ -1,156 +1,120 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { fetchRooms, deleteRoom } from '../../../features/room/roomSlice';
-import { FiPlus, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
-import { toast } from 'react-hot-toast';
+import LoadingSpinner from '../../../components/common/LoadingSpinner';
+import ConfirmDialog from '../../../components/common/ConfirmDialog';
+import Pagination from '../../../components/common/Pagination';
+import { motion } from 'framer-motion';
+import { FiPlus, FiSearch, FiEye, FiEdit2, FiTrash2, FiGrid, FiList, FiUserPlus } from 'react-icons/fi';
 
 const RoomList = () => {
   const dispatch = useDispatch();
-  const { rooms, loading } = useSelector((state) => state.room);
-  const [filterBlock, setFilterBlock] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const navigate = useNavigate();
+  const { rooms, loading, pagination } = useSelector((s) => s.room);
+  const [page, setPage] = useState(1);
+  const [view, setView] = useState('grid');
+  const [deleteId, setDeleteId] = useState(null);
 
-  useEffect(() => {
-    dispatch(fetchRooms({ block: filterBlock, type: filterType }));
-  }, [dispatch, filterBlock, filterType]);
+  useEffect(() => { dispatch(fetchRooms({ page, limit: 12 })); }, [dispatch, page]);
 
-  const handleDelete = async (id, roomNumber) => {
-    if (window.confirm(`Are you sure you want to delete room ${roomNumber}?`)) {
-      const result = await dispatch(deleteRoom(id));
-      if (result.meta.requestStatus === 'fulfilled') {
-        toast.success('Room deleted successfully');
-      }
-    }
+  const handleDelete = async () => {
+    await dispatch(deleteRoom(deleteId));
+    setDeleteId(null);
+    dispatch(fetchRooms({ page, limit: 12 }));
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'full': return 'bg-red-100 text-red-800';
-      case 'maintenance': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const statusColor = { available: 'badge-success', full: 'badge-danger', maintenance: 'badge-warning' };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Room Management</h1>
-          <p className="text-gray-600 mt-1">Manage hostel rooms and allocations</p>
+          <h1 className="page-title">Rooms</h1>
+          <p className="page-subtitle">Manage hostel rooms and allocations</p>
         </div>
-        <Link
-          to="/admin/rooms/new"
-          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
-          <FiPlus />
-          <span>Add Room</span>
-        </Link>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <select
-            value={filterBlock}
-            onChange={(e) => setFilterBlock(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
-          >
-            <option value="">All Blocks</option>
-            <option value="A">Block A</option>
-            <option value="B">Block B</option>
-            <option value="C">Block C</option>
-          </select>
-          
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
-          >
-            <option value="">All Types</option>
-            <option value="single">Single Seater</option>
-            <option value="double">Double Seater</option>
-            <option value="triple">Triple Seater</option>
-          </select>
+        <div className="flex items-center gap-2">
+          <div className="flex bg-surface-100 dark:bg-surface-800 rounded-xl p-0.5">
+            <button onClick={() => setView('grid')} className={`p-2 rounded-lg transition-colors ${view === 'grid' ? 'bg-white dark:bg-surface-700 shadow-sm' : ''}`}>
+              <FiGrid className="w-4 h-4" />
+            </button>
+            <button onClick={() => setView('list')} className={`p-2 rounded-lg transition-colors ${view === 'list' ? 'bg-white dark:bg-surface-700 shadow-sm' : ''}`}>
+              <FiList className="w-4 h-4" />
+            </button>
+          </div>
+          <button onClick={() => navigate('/admin/rooms/new')} className="btn-primary">
+            <FiPlus className="w-4 h-4" /> Add Room
+          </button>
         </div>
       </div>
 
-      {/* Rooms Grid */}
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rooms.map((room) => (
-            <div key={room._id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">{room.roomNumber}</h3>
-                    <p className="text-sm text-gray-500">Block {room.block}, Floor {room.floor}</p>
-                  </div>
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(room.status)}`}>
-                    {room.status}
-                  </span>
+      {loading && !rooms?.length ? <LoadingSpinner /> : view === 'grid' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {rooms?.map((room, i) => (
+            <motion.div key={room._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-card-hover p-5 cursor-pointer" onClick={() => navigate(`/admin/rooms/${room._id}`)}>
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="font-bold text-surface-900 dark:text-white">{room.roomNumber}</p>
+                  <p className="text-xs text-surface-500">Block {room.block} • Floor {room.floor}</p>
                 </div>
-                
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Type:</span>
-                    <span className="font-medium capitalize">{room.type}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Capacity:</span>
-                    <span className="font-medium">{room.currentOccupancy}/{room.capacity}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Rent:</span>
-                    <span className="font-medium">₹{room.rent}/month</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Amenities:</span>
-                    <span className="font-medium">{room.amenities?.length || 0} items</span>
-                  </div>
+                <span className={`badge ${statusColor[room.status] || 'badge-neutral'}`}>{room.status}</span>
+              </div>
+              <div className="space-y-2 mt-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-500">Type</span>
+                  <span className="font-medium text-surface-800 dark:text-surface-200 capitalize">{room.type}</span>
                 </div>
-
-                {room.currentStudents?.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-700">Current Occupants:</p>
-                    <div className="mt-1 space-y-1">
-                      {room.currentStudents.map((student, idx) => (
-                        <p key={idx} className="text-sm text-gray-600">{student.name}</p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-6 flex justify-end space-x-2">
-                  <Link
-                    to={`/admin/rooms/${room._id}`}
-                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                  >
-                    <FiEye className="h-5 w-5" />
-                  </Link>
-                  <Link
-                    to={`/admin/rooms/${room._id}/edit`}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <FiEdit2 className="h-5 w-5" />
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(room._id, room.roomNumber)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <FiTrash2 className="h-5 w-5" />
-                  </button>
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-500">Capacity</span>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">{room.currentOccupancy}/{room.capacity}</span>
+                </div>
+                <div className="w-full bg-surface-200 dark:bg-surface-700 rounded-full h-1.5 mt-1">
+                  <div className="bg-brand-500 rounded-full h-1.5 transition-all" style={{ width: `${(room.currentOccupancy / room.capacity) * 100}%` }} />
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-surface-500">Rent</span>
+                  <span className="font-semibold text-brand-500">₹{room.rent?.toLocaleString()}</span>
                 </div>
               </div>
-            </div>
+              <div className="flex gap-1 mt-4 pt-3 border-t border-surface-200 dark:border-surface-700">
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/rooms/${room._id}/assign`); }} className="btn-ghost btn-sm flex-1"><FiUserPlus className="w-3 h-3" /> Allot</button>
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/rooms/${room._id}/edit`); }} className="btn-ghost btn-sm flex-1"><FiEdit2 className="w-3 h-3" /> Edit</button>
+                <button onClick={(e) => { e.stopPropagation(); setDeleteId(room._id); }} className="btn-ghost btn-sm flex-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"><FiTrash2 className="w-3 h-3" /> Delete</button>
+              </div>
+            </motion.div>
           ))}
         </div>
+      ) : (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead><tr><th>Room</th><th>Block</th><th>Floor</th><th>Type</th><th>Occupancy</th><th>Rent</th><th>Status</th><th className="text-right">Actions</th></tr></thead>
+              <tbody>
+                {rooms?.map((room) => (
+                  <tr key={room._id}>
+                    <td className="font-semibold">{room.roomNumber}</td>
+                    <td>{room.block}</td>
+                    <td>{room.floor}</td>
+                    <td className="capitalize">{room.type}</td>
+                    <td>{room.currentOccupancy}/{room.capacity}</td>
+                    <td className="text-brand-500 font-semibold">₹{room.rent?.toLocaleString()}</td>
+                    <td><span className={`badge ${statusColor[room.status] || 'badge-neutral'}`}>{room.status}</span></td>
+                    <td><div className="flex justify-end gap-1">
+                      <button onClick={() => navigate(`/admin/rooms/${room._id}`)} className="btn-icon"><FiEye className="w-4 h-4" /></button>
+                      <button onClick={() => navigate(`/admin/rooms/${room._id}/assign`)} className="btn-icon"><FiUserPlus className="w-4 h-4" /></button>
+                      <button onClick={() => navigate(`/admin/rooms/${room._id}/edit`)} className="btn-icon"><FiEdit2 className="w-4 h-4" /></button>
+                      <button onClick={() => setDeleteId(room._id)} className="btn-icon text-red-500"><FiTrash2 className="w-4 h-4" /></button>
+                    </div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
       )}
+
+      {pagination && <Pagination currentPage={page} totalPages={pagination.totalPages || 1} onPageChange={setPage} />}
+      <ConfirmDialog isOpen={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={handleDelete} title="Delete Room" message="This room will be permanently removed." confirmText="Delete" danger />
     </div>
   );
 };

@@ -4,20 +4,22 @@ import { fetchStudentAttendance } from '../../features/attendence/attendanceSlic
 
 const MyAttendance = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { currentStudent } = useSelector((state) => state.student);
   const { studentAttendance } = useSelector((state) => state.attendance);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    if (currentStudent?._id) {
+    const studentId = user?.studentInfo?._id || currentStudent?._id;
+    if (studentId) {
       dispatch(fetchStudentAttendance({
-        studentId: currentStudent._id,
+        studentId,
         month: selectedMonth,
         year: selectedYear,
       }));
     }
-  }, [dispatch, currentStudent, selectedMonth, selectedYear]);
+  }, [dispatch, user?.studentInfo?._id, currentStudent?._id, selectedMonth, selectedYear]);
 
   const attendance = studentAttendance?.data || [];
   const summary = studentAttendance?.summary;

@@ -1,256 +1,188 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchDashboardData } from '../../features/dashboard/dashboardSlice';
 import StatsCard from '../../components/dashboard/StatsCard';
-import { 
-  FaUsers, 
-  FaBed, 
-  FaMoneyBillWave, 
-  FaCalendarCheck,
-  FaExclamationTriangle,
-  FaChartLine 
-} from 'react-icons/fa';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { motion } from 'framer-motion';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
+  FiUsers, FiGrid, FiDollarSign, FiCalendar,
+  FiAlertCircle, FiClipboard, FiPlus, FiTrendingUp,
+  FiArrowRight, FiBell, FiUserPlus
+} from 'react-icons/fi';
+import { Doughnut, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS, CategoryScale, LinearScale,
+  BarElement, ArcElement, Title, Tooltip, Legend, Filler
 } from 'chart.js';
+import { useTheme } from '../../context/ThemeContext';
+import AttendanceOverviewCard from '../../components/attendance/AttendanceOverviewCard';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
-  const { data, loading } = useSelector((state) => state.dashboard);
-  const { stats: feeStats } = useSelector((state) => state.fee);
+  const navigate = useNavigate();
+  const { theme } = useTheme();
+  const { data, loading } = useSelector((s) => s.dashboard);
 
-  useEffect(() => {
-    dispatch(fetchDashboardData());
-  }, [dispatch]);
+  useEffect(() => { dispatch(fetchDashboardData()); }, [dispatch]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
+  if (loading && !data) return <LoadingSpinner />;
+
+  const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const textColor = theme === 'dark' ? '#a1a1aa' : '#71717a';
 
   const stats = [
-    {
-      title: 'Total Students',
-      value: data?.studentStats?.total || 0,
-      icon: FaUsers,
-      color: 'bg-blue-500',
-      change: '+12%',
-    },
-    {
-      title: 'Total Rooms',
-      value: data?.roomStats?.summary?.totalRooms || 0,
-      icon: FaBed,
-      color: 'bg-green-500',
-      change: '+5%',
-    },
-    {
-      title: 'Monthly Collection',
-      value: `₹${feeStats?.monthlyCollection?.[0]?.totalCollected?.toLocaleString() || 0}`,
-      icon: FaMoneyBillWave,
-      color: 'bg-yellow-500',
-      change: '+18%',
-    },
-    {
-      title: 'Today\'s Attendance',
-      value: `${data?.todayAttendance?.markedCount || 0}/${data?.todayAttendance?.totalStudents || 0}`,
-      icon: FaCalendarCheck,
-      color: 'bg-purple-500',
-      change: `${((data?.todayAttendance?.markedCount / data?.todayAttendance?.totalStudents) * 100).toFixed(1)}%`,
-    },
+    { title: 'Total Students', value: data?.studentStats?.total || 0, icon: FiUsers, color: 'bg-blue-500', subtitle: 'enrolled' },
+    { title: 'Total Rooms', value: data?.roomStats?.summary?.totalRooms || 0, icon: FiGrid, color: 'bg-emerald-500', subtitle: `${data?.roomStats?.summary?.availableRooms || 0} available` },
+    { title: 'Pending Leaves', value: data?.leaveStats?.statusStats?.find(s => s._id === 'pending')?.count || 0, icon: FiClipboard, color: 'bg-amber-500', subtitle: 'awaiting review' },
+    { title: 'Open Complaints', value: data?.complaintStats?.unresolvedCount || 0, icon: FiAlertCircle, color: 'bg-red-500', subtitle: 'unresolved' },
   ];
 
   const occupancyData = {
     labels: ['Occupied', 'Available', 'Maintenance'],
-    datasets: [
-      {
-        data: [
-          data?.roomStats?.summary?.occupiedRooms || 0,
-          data?.roomStats?.summary?.availableRooms || 0,
-          data?.roomStats?.summary?.maintenanceRooms || 0,
-        ],
-        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
-        borderWidth: 0,
-      },
-    ],
+    datasets: [{
+      data: [
+        data?.roomStats?.summary?.occupiedRooms || 0,
+        data?.roomStats?.summary?.availableRooms || 0,
+        data?.roomStats?.summary?.maintenanceRooms || 0,
+      ],
+      backgroundColor: ['#6366f1', '#10b981', '#f59e0b'],
+      borderWidth: 0,
+      borderRadius: 4,
+    }],
   };
 
-  const attendanceData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    datasets: [
-      {
-        label: 'Present',
-        data: [85, 88, 92, 87, 90, 78, 65],
-        borderColor: '#3B82F6',
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        tension: 0.4,
-      },
-      {
-        label: 'Absent',
-        data: [15, 12, 8, 13, 10, 22, 35],
-        borderColor: '#EF4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.5)',
-        tension: 0.4,
-      },
-    ],
+  const feeData = {
+    labels: data?.feeStats?.monthlyCollection?.slice(0, 6).reverse().map(m => `${m._id.month}`) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    datasets: [{
+      label: 'Collection (₹)',
+      data: data?.feeStats?.monthlyCollection?.slice(0, 6).reverse().map(m => m.totalCollected) || [85000, 92000, 88000, 95000, 91000, 98000],
+      backgroundColor: theme === 'dark' ? 'rgba(99,102,241,0.6)' : 'rgba(99,102,241,0.8)',
+      borderRadius: 8,
+      barThickness: 28,
+    }],
   };
 
-  const feeCollectionData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Collection (₹)',
-        data: [85000, 92000, 88000, 95000, 91000, 98000],
-        backgroundColor: '#10B981',
-      },
-    ],
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: textColor, font: { family: 'Inter', size: 12 } } } },
+    scales: {
+      x: { ticks: { color: textColor, font: { family: 'Inter', size: 11 } }, grid: { color: gridColor } },
+      y: { ticks: { color: textColor, font: { family: 'Inter', size: 11 } }, grid: { color: gridColor } },
+    },
   };
+
+  const quickActions = [
+    { label: 'Add Student', icon: FiUsers, path: '/admin/students/new', color: 'text-blue-500' },
+    { label: 'Allot Room', icon: FiUserPlus, path: '/admin/rooms', color: 'text-indigo-500' },
+    { label: 'Add Room', icon: FiGrid, path: '/admin/rooms/new', color: 'text-emerald-500' },
+    { label: 'Generate Fees', icon: FiDollarSign, path: '/admin/fees/generate', color: 'text-amber-500' },
+    { label: 'Mark Attendance', icon: FiCalendar, path: '/admin/attendance/mark', color: 'text-purple-500' },
+    { label: 'Post Notice', icon: FiBell, path: '/admin/notices/new', color: 'text-red-500' },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-        <button className="btn btn-primary">Download Report</button>
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Dashboard Overview</h1>
+          <p className="page-subtitle">Welcome back! Here's what's happening today.</p>
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <StatsCard key={index} {...stat} />
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-2">
+        {quickActions.map((action) => (
+          <button
+            key={action.label}
+            onClick={() => navigate(action.path)}
+            className="btn-secondary btn-sm gap-1.5"
+          >
+            <action.icon className={`w-3.5 h-3.5 ${action.color}`} />
+            {action.label}
+          </button>
         ))}
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Attendance Trend */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Weekly Attendance Trend</h3>
-          <Line data={attendanceData} options={{ responsive: true }} />
-        </div>
-
-        {/* Room Occupancy */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Room Occupancy Distribution</h3>
-          <div className="flex justify-center">
-            <div className="w-64">
-              <Doughnut data={occupancyData} options={{ responsive: true }} />
-            </div>
-          </div>
-          <div className="mt-4 space-y-2">
-            <div className="flex justify-between">
-              <span>Occupancy Rate:</span>
-              <span className="font-semibold">{data?.roomStats?.summary?.occupancyRate || 0}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Total Capacity:</span>
-              <span className="font-semibold">
-                {data?.roomStats?.byType?.reduce((sum, t) => sum + t.totalCapacity, 0) || 0}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Fee Collection */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Fee Collection Trend</h3>
-          <Bar data={feeCollectionData} options={{ responsive: true }} />
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Activities</h3>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <FaUsers className="h-4 w-4 text-green-600" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">New student registered</p>
-                <p className="text-xs text-gray-500">2 minutes ago</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <FaMoneyBillWave className="h-4 w-4 text-yellow-600" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">Fee payment received</p>
-                <p className="text-xs text-gray-500">1 hour ago</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                  <FaExclamationTriangle className="h-4 w-4 text-red-600" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">New complaint filed</p>
-                <p className="text-xs text-gray-500">3 hours ago</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, i) => <StatsCard key={stat.title} {...stat} delay={i} />)}
       </div>
 
-      {/* Fee Defaulters Alert */}
-      {feeStats?.topDefaulters?.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-red-800 mb-3">Fee Defaulters Alert</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="text-left text-sm text-red-700">
-                  <th className="pb-2">Student Name</th>
-                  <th className="pb-2">Roll Number</th>
-                  <th className="pb-2">Due Amount</th>
-                  <th className="pb-2">Days Overdue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {feeStats.topDefaulters.map((defaulter, index) => (
-                  <tr key={index} className="text-sm">
-                    <td className="py-2">{defaulter.studentId?.userId?.name}</td>
-                    <td className="py-2">{defaulter.studentId?.rollNumber}</td>
-                    <td className="py-2">₹{defaulter.balance}</td>
-                    <td className="py-2">
-                      {Math.ceil((new Date() - new Date(defaulter.dueDate)) / (1000 * 60 * 60 * 24))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Student Attendance */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <AttendanceOverviewCard
+            title="Student Attendance (This Month)"
+            reportPath="/admin/attendance/report"
+            take={8}
+          />
+        </motion.div>
+
+        {/* Room Occupancy */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-surface-800 dark:text-surface-200">Room Occupancy</h3>
+            <span className="text-sm font-semibold text-brand-500">{data?.roomStats?.summary?.occupancyRate || 0}%</span>
           </div>
-        </div>
-      )}
+          <div className="flex items-center justify-center h-52">
+            <div className="w-48"><Doughnut data={occupancyData} options={{ responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Inter', size: 12 }, padding: 16 } } }, cutout: '65%' }} /></div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            {[
+              { label: 'Occupied', value: data?.roomStats?.summary?.occupiedRooms || 0, color: 'bg-brand-500' },
+              { label: 'Available', value: data?.roomStats?.summary?.availableRooms || 0, color: 'bg-emerald-500' },
+              { label: 'Maintenance', value: data?.roomStats?.summary?.maintenanceRooms || 0, color: 'bg-amber-500' },
+            ].map((item) => (
+              <div key={item.label} className="text-center">
+                <div className={`w-2 h-2 rounded-full ${item.color} mx-auto mb-1`} />
+                <p className="text-lg font-bold text-surface-900 dark:text-white">{item.value}</p>
+                <p className="text-[10px] text-surface-500">{item.label}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Fee Collection */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-surface-800 dark:text-surface-200">Fee Collection</h3>
+            <button onClick={() => navigate('/admin/fees')} className="text-xs text-brand-500 font-medium hover:text-brand-600 flex items-center gap-1">
+              View All <FiArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="h-64"><Bar data={feeData} options={chartOptions} /></div>
+        </motion.div>
+
+        {/* Recent Activity */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-card p-5">
+          <h3 className="text-sm font-semibold text-surface-800 dark:text-surface-200 mb-4">Recent Activity</h3>
+          <div className="space-y-3">
+            {[
+              { icon: FiUsers, text: 'New student registered', time: '2 min ago', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/30' },
+              { icon: FiDollarSign, text: 'Fee payment received ₹4,500', time: '1 hour ago', color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30' },
+              { icon: FiAlertCircle, text: 'New complaint: Plumbing Issue', time: '3 hours ago', color: 'text-red-500 bg-red-100 dark:bg-red-900/30' },
+              { icon: FiClipboard, text: 'Leave request approved', time: '5 hours ago', color: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30' },
+              { icon: FiBell, text: 'Notice posted: Exam Schedule', time: '1 day ago', color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/30' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${item.color}`}>
+                  <item.icon className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-surface-700 dark:text-surface-300 truncate">{item.text}</p>
+                  <p className="text-[10px] text-surface-400">{item.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };

@@ -1,112 +1,69 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { fetchDashboardData } from '../../features/dashboard/dashboardSlice';
-import { fetchPendingLeaves } from '../../features/leave/leaveSlice';
-import { fetchComplaints } from '../../features/complaint/complaintSlice';
-import { FaBed, FaUsers, FaClipboardList, FaExclamationTriangle } from 'react-icons/fa';
+import StatsCard from '../../components/dashboard/StatsCard';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { FiUsers, FiGrid, FiClipboard, FiAlertCircle, FiCalendar, FiArrowRight } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
 const WardenDashboard = () => {
   const dispatch = useDispatch();
-  const { data } = useSelector((state) => state.dashboard);
-  const { leaves } = useSelector((state) => state.leave);
-  const { complaints } = useSelector((state) => state.complaint);
+  const navigate = useNavigate();
+  const { data, loading } = useSelector((s) => s.dashboard);
 
-  useEffect(() => {
-    dispatch(fetchDashboardData());
-    dispatch(fetchPendingLeaves());
-    dispatch(fetchComplaints({ status: 'pending' }));
-  }, [dispatch]);
+  useEffect(() => { dispatch(fetchDashboardData()); }, [dispatch]);
+
+  if (loading && !data) return <LoadingSpinner />;
 
   const stats = [
-    {
-      title: 'Total Students',
-      value: data?.studentStats?.total || 0,
-      icon: FaUsers,
-      color: 'bg-blue-500',
-      link: '/warden/students',
-    },
-    {
-      title: 'Total Rooms',
-      value: data?.roomStats?.summary?.totalRooms || 0,
-      icon: FaBed,
-      color: 'bg-green-500',
-      link: '/warden/rooms',
-    },
-    {
-      title: 'Pending Leaves',
-      value: leaves?.filter(l => l.status === 'pending').length || 0,
-      icon: FaClipboardList,
-      color: 'bg-yellow-500',
-      link: '/warden/leaves',
-    },
-    {
-      title: 'Pending Complaints',
-      value: complaints?.filter(c => c.status === 'pending').length || 0,
-      icon: FaExclamationTriangle,
-      color: 'bg-red-500',
-      link: '/warden/complaints',
-    },
+    { title: 'Total Students', value: data?.studentStats?.total || 0, icon: FiUsers, color: 'bg-blue-500' },
+    { title: 'Total Rooms', value: data?.roomStats?.summary?.totalRooms || 0, icon: FiGrid, color: 'bg-emerald-500' },
+  ];
+
+  const quickLinks = [
+    { label: 'Mark Attendance', path: '/warden/attendance', icon: FiCalendar, color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/30' },
+    { label: 'Leave Requests', path: '/warden/leaves', icon: FiClipboard, color: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30' },
+    { label: 'Complaints', path: '/warden/complaints', icon: FiAlertCircle, color: 'text-red-500 bg-red-100 dark:bg-red-900/30' },
+    { label: 'View Students', path: '/warden/students', icon: FiUsers, color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/30' },
+    { label: 'View Rooms', path: '/warden/rooms', icon: FiGrid, color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30' },
   ];
 
   return (
     <div className="space-y-6">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Warden Dashboard</h1>
+          <p className="page-subtitle">Overview of hostel operations</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {stats.map((stat, i) => <StatsCard key={stat.title} {...stat} delay={i} />)}
+      </div>
+
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Warden Dashboard</h1>
-        <p className="text-gray-600 mt-1">Overview of hostel activities</p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <Link key={index} to={stat.link}>
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">{stat.title}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                </div>
-                <div className={`${stat.color} p-3 rounded-full`}>
-                  <stat.icon className="h-6 w-6 text-white" />
-                </div>
+        <h2 className="text-lg font-semibold text-surface-800 dark:text-surface-200 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {quickLinks.map((link, i) => (
+            <motion.button
+              key={link.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              onClick={() => navigate(link.path)}
+              className="glass-card-hover p-5 text-left flex items-center gap-4"
+            >
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${link.color}`}>
+                <link.icon className="w-6 h-6" />
               </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link
-          to="/warden/attendance"
-          className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow text-center"
-        >
-          <div className="text-indigo-600 mb-2">
-            <FaClipboardList className="h-8 w-8 mx-auto" />
-          </div>
-          <h3 className="font-semibold text-gray-900">Mark Attendance</h3>
-          <p className="text-sm text-gray-500 mt-1">Mark daily attendance</p>
-        </Link>
-        <Link
-          to="/warden/leaves"
-          className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow text-center"
-        >
-          <div className="text-yellow-600 mb-2">
-            <FaClipboardList className="h-8 w-8 mx-auto" />
-          </div>
-          <h3 className="font-semibold text-gray-900">Leave Approvals</h3>
-          <p className="text-sm text-gray-500 mt-1">Review leave requests</p>
-        </Link>
-        <Link
-          to="/warden/complaints"
-          className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow text-center"
-        >
-          <div className="text-red-600 mb-2">
-            <FaExclamationTriangle className="h-8 w-8 mx-auto" />
-          </div>
-          <h3 className="font-semibold text-gray-900">Complaints</h3>
-          <p className="text-sm text-gray-500 mt-1">Manage complaints</p>
-        </Link>
+              <div className="flex-1">
+                <p className="font-semibold text-surface-800 dark:text-surface-200">{link.label}</p>
+              </div>
+              <FiArrowRight className="w-4 h-4 text-surface-400" />
+            </motion.button>
+          ))}
+        </div>
       </div>
     </div>
   );

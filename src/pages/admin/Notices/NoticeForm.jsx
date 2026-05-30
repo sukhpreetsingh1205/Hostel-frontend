@@ -5,6 +5,17 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { createNotice, fetchNoticeById, updateNotice } from '../../../features/notice/noticeSlice';
 
+const NOTICE_CATEGORIES = [
+  'Mess',
+  'Maintenance',
+  'Events',
+  'Rules',
+  'General',
+  'Emergency',
+  'Academic',
+  'Announcement',
+];
+
 const NoticeForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -20,7 +31,7 @@ const NoticeForm = () => {
     defaultValues: {
       title: '',
       content: '',
-      category: 'general',
+      category: 'General',
       priority: 'medium',
       validTill: '',
       isActive: true,
@@ -36,7 +47,7 @@ const NoticeForm = () => {
       reset({
         title: currentNotice.title || '',
         content: currentNotice.content || '',
-        category: currentNotice.category || 'general',
+        category: currentNotice.category || 'General',
         priority: currentNotice.priority || 'medium',
         validTill: currentNotice.validTill ? new Date(currentNotice.validTill).toISOString().slice(0, 10) : '',
         isActive: Boolean(currentNotice.isActive),
@@ -97,7 +108,17 @@ const NoticeForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <input className="w-full px-3 py-2 border border-gray-300 rounded-md" {...register('category')} />
+            <select
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              {...register('category', { required: 'Category is required' })}
+            >
+              {NOTICE_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+            {errors.category && <p className="text-xs text-red-600 mt-1">{errors.category.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>

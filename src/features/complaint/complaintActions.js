@@ -4,6 +4,7 @@ export {
   fetchStudentComplaints,
   createComplaint,
   updateComplaint,
+  updateComplaintStatus,
   assignComplaint,
   resolveComplaint,
   closeComplaint,

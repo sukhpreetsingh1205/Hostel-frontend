@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudents } from '../../../features/student/studentSlice';
 import { markAttendance } from '../../../features/attendence/attendanceSlice';
+import { formatDateInputValue } from '../../../utils/helpers';
 import { toast } from 'react-hot-toast';
 
 const AttendanceMarking = () => {
   const dispatch = useDispatch();
   const { students } = useSelector((state) => state.student);
   const [attendanceData, setAttendanceData] = useState({});
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => formatDateInputValue(new Date()));
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchStudents({ status: 'active' }));
+    dispatch(fetchStudents({ status: 'active', limit: 1000 }));
   }, [dispatch]);
 
   useEffect(() => {

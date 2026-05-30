@@ -1,6 +1,7 @@
 import axiosInstance from './axiosConfig';
 
 export const authApi = {
+  register: (data) => axiosInstance.post('/auth/register', data),
   login: (credentials) => axiosInstance.post('/auth/login', credentials),
   getMe: () => axiosInstance.get('/auth/me'),
   logout: () => axiosInstance.post('/auth/logout'),

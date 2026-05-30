@@ -13,6 +13,15 @@ const StudentForm = () => {
   const { currentStudent, loading } = useSelector((state) => state.student);
   const { rooms } = useSelector((state) => state.room);
   const [selectedRoom, setSelectedRoom] = useState('');
+  const formSectionTitle = 'text-lg font-semibold text-surface-900 dark:text-surface-100 mb-4';
+  const labelClass = 'input-label';
+  const inputClass = 'input-field';
+  const selectClass = 'select-field';
+  const availableRooms = rooms.filter((room) => {
+    const availableBeds = room.availableBeds ?? ((room.capacity || 0) - (room.currentOccupancy || 0));
+    return room._id === selectedRoom || (room.status === 'available' && availableBeds > 0);
+  });
+  const selectedRoomDetails = rooms.find((room) => room._id === selectedRoom);
 
   const {
     register,
@@ -22,7 +31,7 @@ const StudentForm = () => {
   } = useForm();
 
   useEffect(() => {
-    dispatch(fetchRooms());
+    dispatch(fetchRooms({ limit: 1000 }));
     if (id) {
       dispatch(fetchStudentById(id));
     }
@@ -65,19 +74,19 @@ const StudentForm = () => {
     }
 
     if (result.meta.requestStatus === 'fulfilled') {
-      toast.success(id ? 'Student updated successfully' : 'Student created successfully');
+      toast.success(selectedRoom ? 'Student saved and room allotment email sent if SMTP is configured' : (id ? 'Student updated successfully' : 'Student created successfully'));
       navigate('/admin/students');
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">
+      <div className="glass-card overflow-hidden rounded-lg">
+        <div className="px-6 py-4 border-b border-surface-200 dark:border-surface-700">
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-50">
             {id ? 'Edit Student' : 'Add New Student'}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-surface-500 dark:text-surface-400 mt-1">
             {id ? 'Update student information' : 'Enter student details to register'}
           </p>
         </div>
@@ -85,19 +94,19 @@ const StudentForm = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
           {/* Personal Information */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
+            <h2 className={formSectionTitle}>Personal Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <label className={labelClass}>Full Name *</label>
                 <input
                   {...register('name', { required: 'Name is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className={inputClass}
                 />
                 {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <label className={labelClass}>Email *</label>
                 <input
                   type="email"
                   {...register('email', { 
@@ -107,13 +116,13 @@ const StudentForm = () => {
                       message: 'Invalid email address',
                     },
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className={inputClass}
                 />
                 {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                <label className={labelClass}>Phone *</label>
                 <input
                   {...register('phone', { 
                     required: 'Phone is required',
@@ -122,23 +131,23 @@ const StudentForm = () => {
                       message: 'Invalid phone number',
                     },
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className={inputClass}
                 />
                 {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                <label className={labelClass}>Date of Birth</label>
                 <input
                   type="date"
                   {...register('dob')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
-                <select {...register('bloodGroup')} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <label className={labelClass}>Blood Group</label>
+                <select {...register('bloodGroup')} className={selectClass}>
                   <option value="">Select</option>
                   <option value="A+">A+</option>
                   <option value="A-">A-</option>
@@ -155,30 +164,30 @@ const StudentForm = () => {
 
           {/* Academic Information */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Academic Information</h2>
+            <h2 className={formSectionTitle}>Academic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student ID *</label>
+                <label className={labelClass}>Student ID *</label>
                 <input
                   {...register('studentId', { required: 'Student ID is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className={inputClass}
                   placeholder="HOSTEL/2024/1001"
                 />
                 {errors.studentId && <p className="mt-1 text-xs text-red-600">{errors.studentId.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Roll Number *</label>
+                <label className={labelClass}>Roll Number *</label>
                 <input
                   {...register('rollNumber', { required: 'Roll number is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className={inputClass}
                 />
                 {errors.rollNumber && <p className="mt-1 text-xs text-red-600">{errors.rollNumber.message}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Course *</label>
-                <select {...register('course', { required: 'Course is required' })} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <label className={labelClass}>Course *</label>
+                <select {...register('course', { required: 'Course is required' })} className={selectClass}>
                   <option value="">Select Course</option>
                   <option value="B.Tech">B.Tech</option>
                   <option value="M.Tech">M.Tech</option>
@@ -191,8 +200,8 @@ const StudentForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Year *</label>
-                <select {...register('year', { required: 'Year is required' })} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <label className={labelClass}>Year *</label>
+                <select {...register('year', { required: 'Year is required' })} className={selectClass}>
                   <option value="">Select Year</option>
                   <option value="1">1st Year</option>
                   <option value="2">2nd Year</option>
@@ -202,19 +211,19 @@ const StudentForm = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
+                <label className={labelClass}>Branch *</label>
                 <input
                   {...register('branch', { required: 'Branch is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <label className={labelClass}>Semester</label>
                 <input
                   type="number"
                   {...register('semester')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={inputClass}
                 />
               </div>
             </div>
@@ -222,18 +231,18 @@ const StudentForm = () => {
 
           {/* Parent/Guardian Information */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Parent/Guardian Information</h2>
+            <h2 className={formSectionTitle}>Parent/Guardian Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Parent Name *</label>
+                <label className={labelClass}>Parent Name *</label>
                 <input
                   {...register('parentName', { required: 'Parent name is required' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Parent Phone *</label>
+                <label className={labelClass}>Parent Phone *</label>
                 <input
                   {...register('parentPhone', { 
                     required: 'Parent phone is required',
@@ -242,24 +251,24 @@ const StudentForm = () => {
                       message: 'Invalid phone number',
                     },
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={inputClass}
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+                <label className={labelClass}>Address *</label>
                 <textarea
                   {...register('address', { required: 'Address is required' })}
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
+                <label className={labelClass}>Emergency Contact</label>
                 <input
                   {...register('emergencyContact')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={inputClass}
                 />
               </div>
             </div>
@@ -267,39 +276,43 @@ const StudentForm = () => {
 
           {/* Hostel Information */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Hostel Information</h2>
+            <h2 className={formSectionTitle}>Hostel Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Allot Room</label>
+                <label className={labelClass}>Allot Room</label>
                 <select
                   value={selectedRoom}
                   onChange={(e) => setSelectedRoom(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={selectClass}
                 >
                   <option value="">Not Allotted</option>
-                  {rooms.map((room) => (
+                  {availableRooms.map((room) => (
                     <option key={room._id} value={room._id}>
-                      {room.roomNumber} - {room.type} ({room.availableBeds} beds available)
+                      {room.block}-{room.roomNumber} - {room.type} ({room.availableBeds ?? ((room.capacity || 0) - (room.currentOccupancy || 0))} beds available)
                     </option>
                   ))}
                 </select>
+                {selectedRoomDetails && (
+                  <div className="mt-3 rounded-lg border border-brand-200 bg-brand-50 p-3 text-sm text-brand-800 dark:border-brand-800/60 dark:bg-brand-950/30 dark:text-brand-200">
+                    Room {selectedRoomDetails.block}-{selectedRoomDetails.roomNumber}, Floor {selectedRoomDetails.floor}, Rent Rs. {selectedRoomDetails.rent?.toLocaleString()}
+                  </div>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mess Preference</label>
-                <select {...register('messPreference')} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <label className={labelClass}>Mess Preference</label>
+                <select {...register('messPreference')} className={selectClass}>
                   <option value="veg">Vegetarian</option>
                   <option value="non-veg">Non-Vegetarian</option>
-                  <option value="jain">Jain</option>
                 </select>
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Medical Conditions (if any)</label>
+                <label className={labelClass}>Medical Conditions (if any)</label>
                 <textarea
                   {...register('medicalConditions')}
                   rows="2"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={inputClass}
                   placeholder="Any allergies, chronic conditions, etc."
                 />
               </div>
@@ -307,18 +320,18 @@ const StudentForm = () => {
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-6 border-t border-surface-200 dark:border-surface-700">
             <button
               type="button"
               onClick={() => navigate('/admin/students')}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+              className="btn-primary"
             >
               {loading ? 'Saving...' : (id ? 'Update Student' : 'Create Student')}
             </button>

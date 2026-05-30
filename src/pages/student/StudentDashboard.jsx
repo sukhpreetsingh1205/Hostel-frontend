@@ -1,200 +1,87 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchStudentFees } from '../../features/fee/feeSlice';
-import { fetchStudentAttendance } from '../../features/attendence/attendanceSlice';
-import { fetchStudentLeaves } from '../../features/leave/leaveSlice';
-import { fetchStudentComplaints } from '../../features/complaint/complaintSlice';
-import { FaUser, FaBed, FaMoneyBillWave, FaCalendarCheck, FaClipboardList, FaBell } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import StatsCard from '../../components/dashboard/StatsCard';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { FiDollarSign, FiCalendar, FiClipboard, FiMessageSquare, FiBell, FiGrid, FiArrowRight, FiPlus } from 'react-icons/fi';
 
 const StudentDashboard = () => {
-  const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
-  const { studentFees } = useSelector((state) => state.fee);
-  const { studentAttendance } = useSelector((state) => state.attendance);
-  const { leaves } = useSelector((state) => state.leave);
-  const { complaints } = useSelector((state) => state.complaint);
-  const { activeNotices } = useSelector((state) => state.notice);
+  const navigate = useNavigate();
+  const { user } = useSelector((s) => s.auth);
+  const studentInfo = user?.studentInfo;
 
-  useEffect(() => {
-    // Fetch student data
-    if (user?.studentInfo?._id) {
-      dispatch(fetchStudentFees(user.studentInfo._id));
-      dispatch(fetchStudentAttendance({
-        studentId: user.studentInfo._id,
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
-      }));
-      dispatch(fetchStudentLeaves(user.studentInfo._id));
-      dispatch(fetchStudentComplaints(user.studentInfo._id));
-    }
-  }, [dispatch, user]);
-
-  const quickStats = [
-    {
-      title: 'Room Number',
-      value: user?.studentInfo?.roomId?.roomNumber || 'Not Allotted',
-      icon: FaBed,
-      color: 'bg-blue-500',
-      link: '/student/room',
-    },
-    {
-      title: 'Total Fees Due',
-      value: `₹${studentFees?.summary?.totalDue?.toLocaleString() || 0}`,
-      icon: FaMoneyBillWave,
-      color: 'bg-yellow-500',
-      link: '/student/fees',
-    },
-    {
-      title: 'Attendance',
-      value: `${studentAttendance?.summary?.percentage || 0}%`,
-      icon: FaCalendarCheck,
-      color: 'bg-green-500',
-      link: '/student/attendance',
-    },
-    {
-      title: 'Pending Leaves',
-      value: leaves?.stats?.pending || 0,
-      icon: FaClipboardList,
-      color: 'bg-purple-500',
-      link: '/student/leaves',
-    },
-  ];
-
-  const quickActions = [
-    { name: 'Pay Fees', icon: FaMoneyBillWave, link: '/student/fees', color: 'bg-green-500' },
-    { name: 'Request Leave', icon: FaClipboardList, link: '/student/leaves/new', color: 'bg-blue-500' },
-    { name: 'Raise Complaint', icon: FaBell, link: '/student/complaints/new', color: 'bg-red-500' },
-    { name: 'View Profile', icon: FaUser, link: '/student/profile', color: 'bg-gray-500' },
+  const quickLinks = [
+    { label: 'My Room', path: '/student/room', icon: FiGrid, desc: 'View room details', color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30' },
+    { label: 'My Fees', path: '/student/fees', icon: FiDollarSign, desc: 'View & pay fees', color: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30' },
+    { label: 'Attendance', path: '/student/attendance', icon: FiCalendar, desc: 'Check attendance', color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/30' },
+    { label: 'Apply Leave', path: '/student/leaves/new', icon: FiClipboard, desc: 'Submit leave request', color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/30' },
+    { label: 'File Complaint', path: '/student/complaints/new', icon: FiMessageSquare, desc: 'Report an issue', color: 'text-red-500 bg-red-100 dark:bg-red-900/30' },
+    { label: 'Notices', path: '/student/notices', icon: FiBell, desc: 'View announcements', color: 'text-brand-500 bg-brand-100 dark:bg-brand-900/30' },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-        <h1 className="text-2xl font-bold">Welcome back, {user?.name}!</h1>
-        <p className="mt-2 opacity-90">
-          {user?.studentInfo?.course} - Year {user?.studentInfo?.year} | Roll No: {user?.studentInfo?.rollNumber}
+      {/* Welcome */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 bg-gradient-to-r from-brand-500/10 to-purple-500/10 dark:from-brand-500/5 dark:to-purple-500/5">
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
+          Welcome back, {user?.name?.split(' ')[0]}! 👋
+        </h1>
+        <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+          {studentInfo?.course} • Year {studentInfo?.year} • Semester {studentInfo?.semester}
+          {studentInfo?.roomId && ` • Room ${studentInfo.roomId.block}-${studentInfo.roomId.roomNumber}`}
         </p>
-      </div>
+      </motion.div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {quickStats.map((stat, index) => (
-          <Link to={stat.link} key={index}>
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">{stat.title}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                </div>
-                <div className={`${stat.color} p-3 rounded-full`}>
-                  <stat.icon className="h-6 w-6 text-white" />
-                </div>
-              </div>
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {quickLinks.map((link, i) => (
+          <motion.button
+            key={link.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.08 }}
+            onClick={() => navigate(link.path)}
+            className="glass-card-hover p-5 text-left flex items-center gap-4"
+          >
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${link.color}`}>
+              <link.icon className="w-6 h-6" />
             </div>
-          </Link>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-surface-800 dark:text-surface-200">{link.label}</p>
+              <p className="text-xs text-surface-500 mt-0.5">{link.desc}</p>
+            </div>
+            <FiArrowRight className="w-4 h-4 text-surface-400 flex-shrink-0" />
+          </motion.button>
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {quickActions.map((action, index) => (
-            <Link
-              key={index}
-              to={action.link}
-              className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
-            >
-              <div className={`${action.color} p-3 rounded-full mb-2`}>
-                <action.icon className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">{action.name}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Notices */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Recent Notices</h2>
-          <div className="space-y-3">
-            {[...(activeNotices?.pinned || []), ...(activeNotices?.recent || [])].slice(0, 3).map((notice, index) => (
-              <div key={index} className="border-b border-gray-100 pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">{notice.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{notice.content}</p>
-                  </div>
-                  {notice.priority === 'high' && (
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                      Urgent
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  {new Date(notice.createdAt).toLocaleDateString()}
-                </p>
+      {/* Student Info Card */}
+      {studentInfo && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card p-6">
+          <h2 className="text-lg font-semibold text-surface-800 dark:text-surface-200 mb-4">My Information</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Student ID', value: studentInfo.studentId },
+              { label: 'Roll Number', value: studentInfo.rollNumber },
+              { label: 'Course', value: studentInfo.course },
+              { label: 'Branch', value: studentInfo.branch },
+              { label: 'Year', value: studentInfo.year },
+              { label: 'Semester', value: studentInfo.semester },
+              { label: 'Status', value: studentInfo.status, badge: true },
+              { label: 'Mess', value: studentInfo.messPreference, badge: true },
+            ].map((item) => (
+              <div key={item.label}>
+                <p className="text-xs text-surface-500 mb-0.5">{item.label}</p>
+                {item.badge ? (
+                  <span className="badge badge-brand capitalize">{item.value}</span>
+                ) : (
+                  <p className="text-sm font-semibold text-surface-800 dark:text-surface-200">{item.value}</p>
+                )}
               </div>
             ))}
           </div>
-          <Link to="/student/notices" className="mt-4 text-sm text-indigo-600 hover:text-indigo-800 block">
-            View all notices →
-          </Link>
-        </div>
-
-        {/* Recent Complaints */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Recent Complaints</h2>
-          <div className="space-y-3">
-            {complaints?.slice(0, 3).map((complaint, index) => (
-              <div key={index} className="border-b border-gray-100 pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">{complaint.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{complaint.category}</p>
-                  </div>
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                    complaint.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                    complaint.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {complaint.status}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  {new Date(complaint.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            ))}
-          </div>
-          <Link to="/student/complaints" className="mt-4 text-sm text-indigo-600 hover:text-indigo-800 block">
-            View all complaints →
-          </Link>
-        </div>
-      </div>
-
-      {/* Fee Status */}
-      {studentFees?.summary?.totalDue > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-yellow-800">Fee Payment Reminder</h3>
-              <p className="text-yellow-700 mt-1">
-                You have a pending fee of ₹{studentFees.summary.totalDue}. Please pay before the due date to avoid late fees.
-              </p>
-            </div>
-            <Link
-              to="/student/fees"
-              className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
-            >
-              Pay Now
-            </Link>
-          </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

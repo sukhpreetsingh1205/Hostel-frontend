@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 
 const MyFees = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { currentStudent } = useSelector((state) => state.student);
   const { studentFees } = useSelector((state) => state.fee);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -17,10 +18,11 @@ const MyFees = () => {
   });
 
   useEffect(() => {
-    if (currentStudent?._id) {
-      dispatch(fetchStudentFees(currentStudent._id));
+    const studentId = user?.studentInfo?._id || currentStudent?._id;
+    if (studentId) {
+      dispatch(fetchStudentFees(studentId));
     }
-  }, [dispatch, currentStudent]);
+  }, [dispatch, user?.studentInfo?._id, currentStudent?._id]);
 
   const handlePayment = async (e) => {
     e.preventDefault();
@@ -39,7 +41,8 @@ const MyFees = () => {
       toast.success('Payment successful');
       setShowPaymentModal(false);
       setPaymentData({ amount: '', method: 'card', transactionId: '' });
-      dispatch(fetchStudentFees(currentStudent._id));
+      const studentId = user?.studentInfo?._id || currentStudent?._id;
+      if (studentId) dispatch(fetchStudentFees(studentId));
     }
   };
 
